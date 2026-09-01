@@ -9,6 +9,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { PREGNANCY_CHECKLIST, BIRTH_CHECKLIST } from "../data/checklist";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -83,11 +84,44 @@ export default function ScheduleScreen() {
     setChild(child);
 
     const { data: custom } = await supabase.from("schedules").select("*").eq("user_id", user.id);
+    const { data: checklistComps } = await supabase.from("checklist_completions")
+      .select("*").eq("user_id", user.id);
 
     const all: ScheduleItem[] = (custom || []).map((s: any) => ({
       id: s.id, title: s.title, emoji: s.emoji, color: s.color,
       memo: s.memo, location: s.location, date: s.date, isAuto: false,
     }));
+
+    if (checklistComps && checklistComps.length > 0 && child) {
+      const checklist = child.type === "pregnancy" ? PREGNANCY_CHECKLIST : BIRTH_CHECKLIST;
+      const compMap: Record<string, string> = {};
+      checklistComps.forEach((c: any) => { compMap[c.item_key] = c.completed_at; });
+
+      const groupedKeys = new Set<string>();
+
+      for (const period of checklist) {
+        const allDone = period.items.every(item => compMap[item.key]);
+        if (allDone) {
+          const dates = new Set(period.items.map(item => compMap[item.key]));
+          if (dates.size === 1) {
+            period.items.forEach(item => groupedKeys.add(item.key));
+            all.push({
+              id: `period-${period.key}`, title: period.label,
+              emoji: "✅", color: "#10b981", date: [...dates][0], isAuto: true,
+            });
+          }
+        }
+      }
+
+      checklistComps.forEach((c: any) => {
+        if (!groupedKeys.has(c.item_key)) {
+          all.push({
+            id: `check-${c.id}`, title: c.item_title,
+            emoji: "✅", color: "#10b981", date: c.completed_at, isAuto: true,
+          });
+        }
+      });
+    }
 
     if (child?.type === "pregnancy" && child?.date) {
       const lmp = getLMP(child.date);

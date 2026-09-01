@@ -23,6 +23,7 @@ import TermsScreen from "../screens/TermsScreen";
 import CalculatorScreen from "../screens/CalculatorScreen";
 import BirthPrepScreen from "../screens/BirthPrepScreen";
 import ScheduleScreen from "../screens/ScheduleScreen";
+import ChecklistScreen from "../screens/ChecklistScreen";
 import ScheduleDetailScreen from "../screens/ScheduleDetailScreen";
 import { useAuth } from "../context/AuthContext";
 
@@ -132,7 +133,7 @@ function TabNavigator({ navigation }: { navigation: NativeStackNavigationProp<Ro
       />
       <Tab.Screen
         name="일정"
-        component={BirthPrepScreen}
+        component={ChecklistScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon name="일정" focused={focused} /> }}
         listeners={authGuard}
       />
