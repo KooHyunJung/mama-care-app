@@ -1,12 +1,14 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { useAuth } from "../context/AuthContext";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MENU_ITEMS = [
+  { screen: "Calculator" as const, icon: "🗓️", title: "임신 주수 계산기" },
+  { screen: "BirthPrep" as const, icon: "🎒", title: "출산 준비 체크리스트" },
   { screen: "Nutrition" as const, icon: "💊", title: "주차별 영양제 가이드" },
   { screen: "WeightTracker" as const, icon: "⚖️", title: "주차별 몸무게 확인" },
   { screen: "HappyCard" as const, icon: "💳", title: "국민행복카드" },
@@ -24,6 +26,14 @@ const INFO_ITEMS = [
 
 export default function MoreScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { signOut, isLoggedIn } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert("로그아웃", "로그아웃 하시겠어요?", [
+      { text: "취소", style: "cancel" },
+      { text: "로그아웃", style: "destructive", onPress: signOut },
+    ]);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -61,6 +71,12 @@ export default function MoreScreen() {
         ))}
       </View>
 
+      {isLoggedIn && (
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
+          <Text style={styles.logoutText}>로그아웃</Text>
+        </TouchableOpacity>
+      )}
+
       <Text style={styles.footer}>© 2026 마마케어</Text>
     </ScrollView>
   );
@@ -89,5 +105,10 @@ const styles = StyleSheet.create({
   rowIcon: { fontSize: 20 },
   rowTitle: { flex: 1, fontSize: 14, color: "#1f2937" },
   rowArrow: { fontSize: 20, color: "#d1d5db" },
+  logoutBtn: {
+    backgroundColor: "#fff", borderRadius: 16, borderWidth: 1, borderColor: "#fce7f3",
+    padding: 16, alignItems: "center", marginBottom: 20,
+  },
+  logoutText: { fontSize: 14, color: "#ec4899", fontWeight: "600" },
   footer: { textAlign: "center", fontSize: 12, color: "#d1d5db", marginTop: 8 },
 });
