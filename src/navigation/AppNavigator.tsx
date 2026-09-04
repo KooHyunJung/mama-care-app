@@ -25,6 +25,7 @@ import BirthPrepScreen from "../screens/BirthPrepScreen";
 import ScheduleScreen from "../screens/ScheduleScreen";
 import ChecklistScreen from "../screens/ChecklistScreen";
 import ScheduleDetailScreen from "../screens/ScheduleDetailScreen";
+import VaccinationScheduleScreen from "../screens/VaccinationScheduleScreen";
 import { useAuth } from "../context/AuthContext";
 
 export type RootStackParamList = {
@@ -47,6 +48,7 @@ export type RootStackParamList = {
     id: string; title?: string; emoji?: string; color: string;
     memo?: string; location?: string; date: string; isAuto: boolean;
   };
+  VaccinationSchedule: undefined;
 };
 
 export type TabParamList = {
@@ -179,6 +181,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Contact" component={ContactScreen} options={{ title: "문의하기" }} />
         <Stack.Screen name="Terms" component={TermsScreen} options={{ title: "이용약관" }} />
         <Stack.Screen name="ScheduleDetail" component={ScheduleDetailScreen} options={{ title: "일정 상세" }} />
+        <Stack.Screen name="VaccinationSchedule" component={VaccinationScheduleScreen} options={{ title: "전체 접종·검진 일정" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

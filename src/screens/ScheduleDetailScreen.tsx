@@ -47,12 +47,12 @@ export default function ScheduleDetailScreen() {
     }
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: "row", gap: 16, paddingRight: 4 }}>
+        <View style={{ flexDirection: "row", gap: 6, paddingRight: 4 }}>
           <TouchableOpacity onPress={() => setEditMode(true)} style={styles.iconBtn}>
-            <Text style={styles.iconText}>✏️</Text>
+            <Text style={styles.iconText}>✎</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete} style={styles.iconBtn}>
-            <Text style={styles.iconText}>🗑</Text>
+            <Text style={styles.iconText}>✕</Text>
           </TouchableOpacity>
         </View>
       ),
@@ -231,6 +231,6 @@ const styles = StyleSheet.create({
   saveBtn: { flex: 1, backgroundColor: "#ec4899", borderRadius: 12, paddingVertical: 14, alignItems: "center" },
   saveText: { fontSize: 14, fontWeight: "700", color: "#fff" },
 
-  iconBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#f3f4f6", alignItems: "center", justifyContent: "center" },
-  iconText: { fontSize: 15 },
+  iconBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  iconText: { fontSize: 18, color: "#6b7280" },
 });

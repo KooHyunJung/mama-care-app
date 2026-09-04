@@ -176,14 +176,13 @@ export default function ScheduleScreen() {
   const DayCell = ({ date, state, marking }: any) => {
     const events: any[] = marking?.events || [];
     const isSelected = marking?.selected;
-    const isToday = date?.dateString === TODAY;
     return (
       <TouchableOpacity
         style={[daySt.cell, isSelected && daySt.selectedCell]}
         onPress={() => handleDayPress({ dateString: date.dateString })}
         activeOpacity={0.7}
       >
-        <View style={[daySt.numberWrap, isToday && daySt.todayWrap]}>
+        <View style={daySt.numberWrap}>
           <Text style={[daySt.number, state === "disabled" && daySt.disabled, isSelected && daySt.selectedNumber]}>
             {date.day}
           </Text>
@@ -339,7 +338,6 @@ const daySt = StyleSheet.create({
   cell: { alignItems: "center", paddingVertical: 4, width: "100%", minHeight: 64 },
   selectedCell: { backgroundColor: "#fff0f6", borderRadius: 8 },
   numberWrap: { width: 28, height: 28, alignItems: "center", justifyContent: "center", borderRadius: 14 },
-  todayWrap: { backgroundColor: "#ec4899" },
   number: { fontSize: 13, color: "#111827", fontWeight: "500" },
   selectedNumber: { color: "#ec4899", fontWeight: "700" },
   disabled: { color: "#d1d5db" },
