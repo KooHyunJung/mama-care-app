@@ -78,14 +78,17 @@ export default function ScheduleScreen() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: children } = await supabase.from("children").select("*")
+    const { data: children, error: childrenError } = await supabase.from("children").select("*")
       .eq("user_id", user.id).order("created_at").limit(1);
+    if (childrenError) console.error("ScheduleScreen fetch children error:", childrenError);
     const child = children?.[0] || null;
     setChild(child);
 
-    const { data: custom } = await supabase.from("schedules").select("*").eq("user_id", user.id);
-    const { data: checklistComps } = await supabase.from("checklist_completions")
+    const { data: custom, error: customError } = await supabase.from("schedules").select("*").eq("user_id", user.id);
+    if (customError) console.error("ScheduleScreen fetch schedules error:", customError);
+    const { data: checklistComps, error: compsError } = await supabase.from("checklist_completions")
       .select("*").eq("user_id", user.id);
+    if (compsError) console.error("ScheduleScreen fetch completions error:", compsError);
 
     const all: ScheduleItem[] = (custom || []).map((s: any) => ({
       id: s.id, title: s.title, emoji: s.emoji, color: s.color,
@@ -157,7 +160,7 @@ export default function ScheduleScreen() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-    await supabase.from("schedules").insert({
+    const { error } = await supabase.from("schedules").insert({
       user_id: user.id,
       child_id: child?.id || null,
       title: newTitle.trim() || null,
@@ -167,6 +170,12 @@ export default function ScheduleScreen() {
       location: newLocation.trim() || null,
       date: selectedDate,
     });
+    if (error) {
+      console.error("addSchedule insert error:", error);
+      Alert.alert("일정을 추가하지 못했어요.", error.message);
+      setLoading(false);
+      return;
+    }
     setNewTitle(""); setNewEmoji(""); setNewColor(COLORS[0]); setNewMemo(""); setNewLocation("");
     setShowModal(false);
     fetchAll();

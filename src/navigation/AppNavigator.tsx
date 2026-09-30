@@ -26,6 +26,7 @@ import ScheduleScreen from "../screens/ScheduleScreen";
 import ChecklistScreen from "../screens/ChecklistScreen";
 import ScheduleDetailScreen from "../screens/ScheduleDetailScreen";
 import VaccinationScheduleScreen from "../screens/VaccinationScheduleScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 import { useAuth } from "../context/AuthContext";
 
 export type RootStackParamList = {
@@ -70,9 +71,6 @@ const ICONS = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-function MenuPlaceholder() {
-  return <View style={{ flex: 1, backgroundColor: "#f9fafb" }} />;
-}
 
 function TabIcon({ name, focused }: { name: keyof typeof ICONS; focused: boolean }) {
   return (
@@ -141,7 +139,7 @@ function TabNavigator({ navigation }: { navigation: NativeStackNavigationProp<Ro
       />
       <Tab.Screen
         name="프로필"
-        component={MenuPlaceholder}
+        component={ProfileScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon name="프로필" focused={focused} /> }}
         listeners={authGuard}
       />

@@ -75,18 +75,21 @@ export default function ChecklistScreen() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setIsLoading(false); return; }
 
-    const { data: children } = await supabase.from("children").select("*")
+    const { data: children, error: childrenError } = await supabase.from("children").select("*")
       .eq("user_id", user.id).order("created_at").limit(1);
+    if (childrenError) console.error("ChecklistScreen fetch children error:", childrenError);
     setChild(children?.[0] || null);
 
-    const { data: comps } = await supabase.from("checklist_completions")
+    const { data: comps, error: compsError } = await supabase.from("checklist_completions")
       .select("item_key, completed_at").eq("user_id", user.id);
+    if (compsError) console.error("ChecklistScreen fetch completions error:", compsError);
     const map: Record<string, string> = {};
     (comps || []).forEach((c: any) => { map[c.item_key] = c.completed_at; });
     setCompletions(map);
 
-    const { data: todoData } = await supabase.from("todos")
+    const { data: todoData, error: todoError } = await supabase.from("todos")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    if (todoError) console.error("ChecklistScreen fetch todos error:", todoError);
     setTodos(todoData || []);
 
     setIsLoading(false);
@@ -99,15 +102,25 @@ export default function ChecklistScreen() {
 
     if (completions[item.key]) {
       setCompletions(prev => { const n = { ...prev }; delete n[item.key]; return n; });
-      await supabase.from("checklist_completions")
+      const { error } = await supabase.from("checklist_completions")
         .delete().eq("user_id", user.id).eq("child_id", child.id).eq("item_key", item.key);
+      if (error) {
+        console.error("toggleItem delete error:", error);
+        Alert.alert("완료 취소에 실패했어요.", error.message);
+        fetchAll();
+      }
     } else {
       const today = new Date().toISOString().split("T")[0];
       setCompletions(prev => ({ ...prev, [item.key]: today }));
-      await supabase.from("checklist_completions").upsert({
+      const { error } = await supabase.from("checklist_completions").upsert({
         user_id: user.id, child_id: child.id,
         item_key: item.key, item_title: item.title, completed_at: today,
       }, { onConflict: "user_id,child_id,item_key" });
+      if (error) {
+        console.error("toggleItem upsert error:", error);
+        Alert.alert("완료 처리에 실패했어요.", error.message);
+        fetchAll();
+      }
     }
   };
 
@@ -123,8 +136,14 @@ export default function ChecklistScreen() {
       items.forEach(item => delete next[item.key]);
       setCompletions(next);
       for (const item of items) {
-        await supabase.from("checklist_completions")
+        const { error } = await supabase.from("checklist_completions")
           .delete().eq("user_id", user.id).eq("child_id", child.id).eq("item_key", item.key);
+        if (error) {
+          console.error("togglePeriod delete error:", error);
+          Alert.alert("완료 취소에 실패했어요.", error.message);
+          fetchAll();
+          return;
+        }
       }
     } else {
       const next = { ...completions };
@@ -132,10 +151,16 @@ export default function ChecklistScreen() {
       toInsert.forEach(item => { next[item.key] = today; });
       setCompletions(next);
       for (const item of toInsert) {
-        await supabase.from("checklist_completions").upsert({
+        const { error } = await supabase.from("checklist_completions").upsert({
           user_id: user.id, child_id: child.id,
           item_key: item.key, item_title: item.title, completed_at: today,
         }, { onConflict: "user_id,child_id,item_key" });
+        if (error) {
+          console.error("togglePeriod upsert error:", error);
+          Alert.alert("완료 처리에 실패했어요.", error.message);
+          fetchAll();
+          return;
+        }
       }
     }
   };
@@ -145,11 +170,17 @@ export default function ChecklistScreen() {
     setAddingTodo(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setAddingTodo(false); return; }
-    const { data } = await supabase.from("todos").insert({
+    const { data, error } = await supabase.from("todos").insert({
       user_id: user.id,
       title: newTodoTitle.trim(),
     }).select().single();
-    if (data) setTodos(prev => [data, ...prev]);
+    if (error || !data) {
+      console.error("addTodo insert error:", error);
+      Alert.alert("할일을 추가하지 못했어요.", error?.message);
+      setAddingTodo(false);
+      return;
+    }
+    setTodos(prev => [data, ...prev]);
     setNewTodoTitle("");
     setShowAddModal(false);
     setAddingTodo(false);
@@ -161,7 +192,13 @@ export default function ChecklistScreen() {
     const today = new Date().toISOString().split("T")[0];
     const newDate = todo.completed_at ? null : today;
     setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, completed_at: newDate } : t));
-    await supabase.from("todos").update({ completed_at: newDate }).eq("id", todo.id);
+    const { error } = await supabase.from("todos")
+      .update({ completed_at: newDate }).eq("id", todo.id).eq("user_id", user.id);
+    if (error) {
+      console.error("toggleTodo update error:", error);
+      Alert.alert("할일 상태를 변경하지 못했어요.", error.message);
+      fetchAll();
+    }
   };
 
   const deleteTodo = (todo: Todo) => {
@@ -169,8 +206,15 @@ export default function ChecklistScreen() {
       { text: "취소", style: "cancel" },
       {
         text: "삭제", style: "destructive", onPress: async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
           setTodos(prev => prev.filter(t => t.id !== todo.id));
-          await supabase.from("todos").delete().eq("id", todo.id);
+          const { error } = await supabase.from("todos").delete().eq("id", todo.id).eq("user_id", user.id);
+          if (error) {
+            console.error("deleteTodo error:", error);
+            Alert.alert("할일을 삭제하지 못했어요.", error.message);
+            fetchAll();
+          }
         },
       },
     ]);
